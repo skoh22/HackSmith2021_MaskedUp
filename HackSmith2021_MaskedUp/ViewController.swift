@@ -7,13 +7,80 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
     }
 
+    @IBOutlet weak var textTitle:UILabel?
+    @IBOutlet weak var instructions:UILabel?
+    @IBOutlet weak var maskClass:UILabel?
+    @IBOutlet weak var imageView:UIImageView?
+    @IBOutlet weak var butt:UIButton!
+    var buttonType:Bool = false //false means it is ready to take a photo
+    var imagePicker: UIImagePickerController!
 
+    // photo code adapted from https://www.ioscreator.com/tutorials/take-photo-ios-tutorial
+    
+    @IBAction func takePhoto(){
+        if buttonType == false{
+            //hide other labels
+            instructions?.isHidden = true
+            maskClass?.isHidden = true
+            
+            //take photo
+            imagePicker =  UIImagePickerController()
+            imagePicker.delegate = self
+            imagePicker.sourceType = .camera
+            imagePicker.cameraFlashMode = .off
+            imagePicker.allowsEditing = true
+            present(imagePicker, animated: true, completion: nil)
+            
+            //change button
+            butt.setTitle("Classify", for: .normal)
+            buttonType=true
+        }
+        else{
+            let maskStat:Int = classify(imagePicker: imagePicker)
+            if maskStat == 0{
+                maskClass?.textColor = UIColor.green
+                maskClass?.text = "Correct"
+                instructions?.text = "Thank you for helping prevent the spread of COVID-19!"
+            }
+            else{
+                maskClass?.textColor = UIColor.red
+                maskClass?.text = "Incorrect"
+                if maskStat == 1{
+                    //pull your mask over your chin
+                    instructions?.text = "Make sure your mask covers your mouth"
+                }
+                else if maskStat == 2{
+                    //pull your mask up over your nose
+                    instructions?.text = "Make sure your mask covers your nose"
+                }
+                else if maskStat == 3{
+                    //pull your mask up over your nose and mouth
+                    instructions?.text = "Make sure your mask covers your nose and mouth"
+                }
+            }
+            instructions?.isHidden = false
+            maskClass?.isHidden = false
+            butt.setTitle("Take Photo", for: .normal)
+            buttonType = false
+        }
+    }
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            imagePicker.dismiss(animated: true, completion: nil)
+        imageView?.image = info[UIImagePickerController.InfoKey.editedImage] as? UIImage
+        }
+    func classify(imagePicker:UIImagePickerController)-> Int{
+        var maskStatus:Int
+        //Use ML model to figure this out but using random number for now
+        let randomInt = Int.random(in: 0..<4)
+        maskStatus = randomInt
+        //
+        return maskStatus
+    }
 }
 
